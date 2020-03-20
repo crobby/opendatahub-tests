@@ -24,6 +24,13 @@ echo opendatahub-operator alpha https://github.com/tmckayus/opendatahub-tests >>
 ./operator-tests/run.sh
 ```
 
+You can run tests individually by passing a substring to run.sh to match:
+
+```bash
+./operator-tests/run.sh cr.sh
+./operator-tests/run.sh nb.sh
+```
+
 # Basic *cr.sh* test
 
 The *cr.sh* test will create an opendatahub instance
@@ -38,40 +45,26 @@ spark operator.
 # Notebook test *nb.sh*
 
 The *nb.sh* test will look for a singleuser-server pod
-that has a **SPARK_CLUSTER** environment variable set.
-
-If such a pod is found, it gets the name of the spark cluster
+that has a **SPARK_CLUSTER** environment variable set. If such
+a pod is found, it gets the name of the spark cluster
 and verifies that the number of workers matches the number
-of instances specified in the spark cluster configmap.
-
-If there is no singleuser-server pod, the test passes silently.
+of instances specified in the spark cluster configmap. If there
+is no singleuser-server pod, the test passes silently.
 
 The steps to run this test are:
 
-* Create an opendatahub instance manually.
+* Create an opendatahub instance manually because any instance created by the *cr.sh*
+  test will be deleted.
 
-  This is necessary because any instance created by the *cr.sh*
-  test will be deleted by the test script before *nb.sh* runs.
-
-  You can do this simply with the *odh.yaml* in this repo:
   ```bash
+  oc project opendatahub-operator
   oc create -f odh.yaml
   ```
   
-* Launch a server from the jupyterhub instance that uses spark
+* Launch a server from jupyterhub that uses spark (for example, use the *s2i-spark-minimal-notebook* image)
 
-  For example, use the *s2i-spark-minimal-notebook* image
-
-* Run the tests
-
-  To run all the tests agains the manual odh deployment, do this:
+* Run the tests (all of them, or just *nb.sh*, your choice)
 
   ```bash
   ./operator-tests/run.sh
-  ```
-
-  To run just the notebook test, do this:
-
-  ```bash
-  ./operator-tests/run.sh nb.sh
   ```
