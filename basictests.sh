@@ -9,23 +9,54 @@ os::test::junit::declare_suite_start "$MY_SCRIPT"
 function test_ai_library() {
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment ailibrary-operator" "ailibrary-operator"
-    os::cmd::expect_success_and_text "oc get pod -lcomponent.opendatahub.io/name=ailibrary" "ailibrary-operator"
+    runningpods=($(oc get pods -l name=ailibrary-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
 }
 
 function test_odhargo() {
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment argo-server" "argo-server"
-    os::cmd::expect_success_and_text "oc get pod -lcomponent.opendatahub.io/name=odhargo" "argo-server"
-    os::cmd::expect_success_and_text "oc get pod -lcomponent.opendatahub.io/name=odhargo" "workflow-controller"
+    runningpods=($(oc get pods -l app=argo-server --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
+    runningpods=($(oc get pods -l app=workflow-controller --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
 }
 
 function test_grafana() {
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment grafana-operator" "grafana-operator"
-    os::cmd::expect_success_and_text "oc get pod -lname=grafana-operator" "grafana-operator"
-    os::cmd::expect_success_and_text "oc get pod -lcomponent.opendatahub.io/name=odhargo" "workflow-controller"
+    runningpods=($(oc get pods -l name=grafana-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
+    runningpods=($(oc get pods -l app=grafana --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
+    os::cmd::expect_success_and_text "oc get grafanadashboard" "odh-kafka"
+    os::cmd::expect_success_and_text "oc get grafanadatasource" "odh-datasource"
 }
 
+function test_kafka() {
+    os::cmd::expect_success "oc project opendatahub"
+    os::cmd::expect_success_and_text "oc get deployments -n openshift-operators" "strimzi-cluster-operator"
+    runningbuspods=($(oc get pods -n openshift-operators -l name=strimzi-cluster-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningbuspods[@]}" "1"
+    os::cmd::expect_success_and_text "oc get kafka" "odh-message-bus"
+    os::cmd::expect_success_and_text "oc get deployments" "odh-message-bus-entity-operator"
+    runningbuspods=($(oc get pods -l app.kubernetes.io/instance=odh-message-bus --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningbuspods[@]}" "7"
+}
+
+function test_superset() {
+    os::cmd::expect_success "oc project opendatahub"
+    os::cmd::expect_success_and_text "oc get deploymentconfig superset" "superset"
+    runningpods=($(oc get pods -l app=superset --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningpods[@]}" "1"
+}
+
+function test_prometheus() {
+    runningbuspods=($(oc get pods -l k8s-app=prometheus-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningbuspods[@]}" "1"
+    runningbuspods=($(oc get pods -l app=prometheus --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
+    os::cmd::expect_success_and_text "echo ${#runningbuspods[@]}" "1"
+}
 # function create_cr() {
 
 #     # If there is not an odh already, make one, and clean it up after
@@ -68,5 +99,9 @@ function test_grafana() {
 # create_cr
 test_ai_library
 test_odhargo
+test_grafana
+test_kafka
+test_superset
+test_prometheus
 
 os::test::junit::declare_suite_end
