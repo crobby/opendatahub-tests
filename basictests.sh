@@ -4,9 +4,12 @@ source $TEST_DIR/common
 
 MY_DIR=$(readlink -f `dirname "${BASH_SOURCE[0]}"`)
 
+source ${MY_DIR}/util
+
 os::test::junit::declare_suite_start "$MY_SCRIPT"
 
 function test_ai_library() {
+    header "Testing AI Library installation"
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment ailibrary-operator" "ailibrary-operator"
     runningpods=($(oc get pods -l name=ailibrary-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
@@ -14,6 +17,7 @@ function test_ai_library() {
 }
 
 function test_odhargo() {
+    header "Testing ODH Argo installation"
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment argo-server" "argo-server"
     runningpods=($(oc get pods -l app=argo-server --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
@@ -23,6 +27,7 @@ function test_odhargo() {
 }
 
 function test_grafana() {
+    header "Testing ODH Grafana installation"
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployment grafana-operator" "grafana-operator"
     runningpods=($(oc get pods -l name=grafana-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
@@ -34,6 +39,7 @@ function test_grafana() {
 }
 
 function test_kafka() {
+    header "Testing ODH Strimzi Kafka installation"
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deployments -n openshift-operators" "strimzi-cluster-operator"
     runningbuspods=($(oc get pods -n openshift-operators -l name=strimzi-cluster-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
@@ -45,6 +51,7 @@ function test_kafka() {
 }
 
 function test_superset() {
+    header "Testing ODH Superset installation"
     os::cmd::expect_success "oc project opendatahub"
     os::cmd::expect_success_and_text "oc get deploymentconfig superset" "superset"
     runningpods=($(oc get pods -l app=superset --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
@@ -52,6 +59,7 @@ function test_superset() {
 }
 
 function test_prometheus() {
+    header "Testing ODH Prometheus installation"
     runningbuspods=($(oc get pods -l k8s-app=prometheus-operator --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
     os::cmd::expect_success_and_text "echo ${#runningbuspods[@]}" "1"
     runningbuspods=($(oc get pods -l app=prometheus --field-selector="status.phase=Running" -o jsonpath="{$.items[*].metadata.name}"))
